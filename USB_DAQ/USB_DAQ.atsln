@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "USB_DAQ", "USB_DAQ.cproj", "{AE50363B-93EB-42F2-B97B-709650EDC572}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE50363B-93EB-42F2-B97B-709650EDC572}.Debug|ARM.ActiveCfg = Debug|ARM
+		{AE50363B-93EB-42F2-B97B-709650EDC572}.Debug|ARM.Build.0 = Debug|ARM
+		{AE50363B-93EB-42F2-B97B-709650EDC572}.Release|ARM.ActiveCfg = Release|ARM
+		{AE50363B-93EB-42F2-B97B-709650EDC572}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
