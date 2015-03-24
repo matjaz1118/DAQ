@@ -31,6 +31,8 @@ typedef struct
 	uint8_t sequence[8];
 	uint16_t samplesNbr;
 	uint16_t cycles;
+	uint8_t startAcq;
+	uint8_t stopAcq;
 }daq_settings_t;
 
 //Finite state machine states definitions 
@@ -39,6 +41,18 @@ typedef struct
 #define	FSM_WAIT_2_BYTES		1
 #define FSM_WAIT_8_BYTES		2
 #define FSM_SET_FREQ			3
+
+#define HOLDING_BUFFER_SIZE		20
+
+#define LIST_OF_KNOWN_COMANDS	"STRAFED"
+
+#define COMAND_START_ACQ						'S'
+#define COMAND_STOP_ACQ							'T'
+#define COMAND_SET_SAMPLE_PERIOD				'R'
+#define COMAND_SET_AVERAGE_COUNT				'A'
+#define COMAND_SET_MEASURMENT_NBR_COUNT			'F'
+#define COMAND_SET_SEQUENCER					'E'
+#define COMAND_SET_DAC_VALUE					'D'
 
 
 

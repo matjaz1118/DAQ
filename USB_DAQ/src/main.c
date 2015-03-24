@@ -42,15 +42,18 @@ int main (void)
 	board_init();
 	sysclk_init();
 	
+	/*
 	ADC_init();
 	timer_init();
 	pio_set_output(PIOA, PIO_PA17, LOW, DISABLE, DISABLE);
+	*/
+	udc_start();
 	
-	//udc_start();
 	
 	while(1)
 	{
-		
+		parse_comands();
+		delay_ms(10);
 	}
 	// Insert application code here, after the board has been initialized.
 }

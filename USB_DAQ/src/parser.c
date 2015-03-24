@@ -8,112 +8,95 @@
 #include "parser.h"
 #include "udi_cdc.h"
 #include "stdint-gcc.h"
+#include <string.h>
+#include <stdio.h>
 
 
 daq_settings_t daqSettings;
 
 
 
+void skip_blank_chars (uint8_t *string)
+{
+	string++;
+	while((*string) == ' ' )
+	{
+		string++;
+	}
+}
+
+
 void parse_comands (void)
 {
 	static uint8_t fsmState = FSM_ID_BYTE;
 	static uint8_t comandByte = 0;
-	static uint8_t bytesToGo = 0;
-	static uint8_t temp[8];
+	static uint8_t insertPointer = 0;
+	uint8_t temp, n = 0;
+	static uint8_t holdingBuffer[HOLDING_BUFFER_SIZE];
+	static uint8_t tempBuffer[10];
+	uint8_t *startOfData;
+	uint8_t printBuffer [50];
+	uint32_t charsPrinted;
+	uint32_t a;
 	
 	if(udi_cdc_is_rx_ready())
 	{
-		switch(fsmState)
+		temp = udi_cdc_getc();
+		udi_cdc_putc(temp);
+		
+		if(insertPointer < (HOLDING_BUFFER_SIZE - 2))
 		{
+			holdingBuffer[insertPointer] = temp;
+			insertPointer++;
+		}	
+		if(temp == '\r')
+		{
+			udi_cdc_putc('\n');
+			udi_cdc_putc('\r');
 			
-			case FSM_ID_BYTE :
-				comandByte = udi_cdc_getc();
-				switch(comandByte)
-				{
-					case(DAQ_START):
-						//daq_start();
-						break;
-					case(DAQ_STOP): 
-						//daq_stop();
-						break;
-					case(DAQ_SET_FREQUENCY):
-						bytesToGo = 1;
-						fsmState = FSM_SET_FREQ;
-						break;
-					case(DAQ_SET_SAMPLE_NBR):
-						bytesToGo = 2;
-						fsmState = FSM_WAIT_2_BYTES;
-						break;
-					case(DAQ_SET_CYCLE_NBR):
-						bytesToGo = 2;
-						fsmState = FSM_WAIT_2_BYTES;
-						break;
-					case(DAQ_SET_ANALOG_OUT):
-						bytesToGo = 2;
-						fsmState = FSM_WAIT_2_BYTES;
-						break;
-					case(DAQ_SET_SEQUENCER):
-						bytesToGo = 8;
-						fsmState = FSM_WAIT_8_BYTES;
-						break;
-					default:
-						fsmState = FSM_ID_BYTE;
-						break;
+			holdingBuffer[insertPointer] = 0;
+			startOfData = strpbrk(holdingBuffer, LIST_OF_KNOWN_COMANDS);
+			//after this executes startOfData should point to first know character in string
+			switch (*(startOfData))
+			{
+				case COMAND_START_ACQ:
+					daqSettings.startAcq = 1;
+					charsPrinted = sprintf(printBuffer, "Acquisition started\n\r");
+					udi_cdc_write_buf(printBuffer, charsPrinted);
+					break;
+				
+				case COMAND_STOP_ACQ:
+					daqSettings.stopAcq = 1;
+					charsPrinted = sprintf(printBuffer, "Acquisition stoped\n\r");
+					udi_cdc_write_buf(printBuffer, charsPrinted);
+					break;
 					
-				}
-				break;
+				case COMAND_SET_SAMPLE_PERIOD:
+					skip_blank_chars(startOfData);
+					n = 0;
+					while(*startOfData >= '0' && *startOfData <= '9')
+					{
+						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break;
+						tempBuffer[n++] = *startOfData++;
+					}
+					if(*startOfData == '\r')
+					{
+						tempBuffer[n] = 0;
+						daqSettings.timerBase = atoi(tempBuffer);
+						charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase);
+						udi_cdc_write_buf(printBuffer, charsPrinted);
+						//todo: limit sample rate period
+						//todo: calcualte timeer base based on sample period
+					}
+			}
 			
-			case FSM_SET_FREQ :
-				daqSettings.timerBase = udi_cdc_getc();
-				daqSettings.newData = TRUE;
-				fsmState = FSM_ID_BYTE;
-				break;
-				
-				
-			case FSM_WAIT_2_BYTES :
-				temp[2 - bytesToGo] = udi_cdc_getc();
-				bytesToGo--;
-				if(!bytesToGo)
-				{
-					if(comandByte == 0x12)
-					{
-						daqSettings.samplesNbr = ((uint16_t)temp[0] << 8) | temp[1]; 
-						daqSettings.newData = TRUE;
-					}
-					else if(comandByte == 0x22)
-					{
-						daqSettings.cycles = ((uint16_t)temp[0] << 8) | temp[1];
-						daqSettings.newData = TRUE;
-					}
-					else if(comandByte == 0x32)
-					{
-						//dac_set(((uint16_t)temp[0] << 8) | temp[1]);
-					}
-					fsmState = FSM_ID_BYTE;
-				}
-				
-				break;
-				
-				
-			case FSM_WAIT_8_BYTES :
-				temp[8 - bytesToGo] = udi_cdc_getc();
-				bytesToGo--;
-				if(!bytesToGo)
-				{
-					for(bytesToGo = 0; bytesToGo < 8; bytesToGo++)
-					{
-						daqSettings.sequence[bytesToGo] = temp[bytesToGo];
-					}
-					daqSettings.newData = TRUE;
-					fsmState = FSM_ID_BYTE;
-				}
-				break;
-				
-			default :
-				break;
-		}							
-	}	
+			insertPointer = 0;
+		}
+	
+	}
 }
+
+
 
 
 daq_settings_t * get_current_DAQ_settings (void)
