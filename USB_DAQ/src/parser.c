@@ -36,7 +36,7 @@ void parse_comands (void)
 	static uint8_t tempBuffer[10];
 	uint8_t *startOfData;
 	uint8_t printBuffer [50];
-	uint32_t charsPrinted;
+	uint32_t charsPrinted, entryCounter;
 	uint32_t a;
 	
 	if(udi_cdc_is_rx_ready())
@@ -72,22 +72,82 @@ void parse_comands (void)
 					break;
 					
 				case COMAND_SET_SAMPLE_PERIOD:
-					skip_blank_chars(startOfData);
+				case COMAND_SET_AVERAGE_COUNT:
+				case COMAND_SET_MEASURMENT_NBR_COUNT:
+					comandByte = *startOfData;
+					//skip_blank_chars(startOfData);
+					startOfData++;
 					n = 0;
 					while(*startOfData >= '0' && *startOfData <= '9')
 					{
 						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break;
 						tempBuffer[n++] = *startOfData++;
 					}
-					if(*startOfData == '\r')
+					if(comandByte == COMAND_SET_SAMPLE_PERIOD)
 					{
-						tempBuffer[n] = 0;
-						daqSettings.timerBase = atoi(tempBuffer);
-						charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase);
-						udi_cdc_write_buf(printBuffer, charsPrinted);
-						//todo: limit sample rate period
-						//todo: calcualte timeer base based on sample period
+						if(*startOfData == '\r')
+						{
+							tempBuffer[n] = 0;
+							daqSettings.timerBase = atoi(tempBuffer);
+							charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase);
+							udi_cdc_write_buf(printBuffer, charsPrinted);
+							//todo: limit sample rate period
+							//todo: calcualte timeer base based on sample period
+						}	
 					}
+					else if(comandByte == COMAND_SET_AVERAGE_COUNT)
+					{
+						if(*startOfData == '\r')
+						{
+							tempBuffer[n] = 0;
+							daqSettings.samplesNbr = atoi(tempBuffer);
+							charsPrinted = sprintf(printBuffer, "DAQ will atempt to take %u samples per channel\n\r", daqSettings.samplesNbr);
+							udi_cdc_write_buf(printBuffer, charsPrinted);
+							//todo: limit samples per channel
+						}
+					}
+					else if(comandByte == COMAND_SET_MEASURMENT_NBR_COUNT)
+					{
+						if(*startOfData == '\r')
+						{
+							tempBuffer[n] = 0;
+							daqSettings.cycles = atoi(tempBuffer);
+							charsPrinted = sprintf(printBuffer, "DAQ will sample all enebled channels %u times\n\r", daqSettings.cycles);
+							udi_cdc_write_buf(printBuffer, charsPrinted);
+							//todo: limit samples per channel
+						}
+					}
+					break;
+				
+				case COMAND_SET_SEQUENCER:
+					//skip_blank_chars();
+					startOfData++;
+					entryCounter = 0;
+					n = 0;
+					while(entryCounter < 8)
+					{
+						n = 0;
+						while(*startOfData != ',')
+						{
+							tempBuffer[n++] = *startOfData++;
+							if(*startOfData == '\r') break;
+						}
+						tempBuffer[n]  = 0;
+						a = atoi(tempBuffer);
+						if(a)
+						{
+							daqSettings.sequence[entryCounter] = a;
+						}
+						else
+						{
+							daqSettings.sequence[entryCounter] = 0;
+							break;
+						}
+						if(*startOfData == '\r') break;
+						entryCounter++;
+						startOfData++;
+					}
+					
 			}
 			
 			insertPointer = 0;
