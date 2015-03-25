@@ -26,6 +26,15 @@ void skip_blank_chars (uint8_t *string)
 }
 
 
+void print_formating_error(void)
+{
+	uint32_t charsPrinted;
+	uint8_t printBuffer[20];
+	
+	charsPrinted = sprintf(printBuffer, "Comand format error!\n\r");
+	udi_cdc_write_buf(printBuffer, charsPrinted);
+}
+
 void parse_comands (void)
 {
 	static uint8_t fsmState = FSM_ID_BYTE;
@@ -37,18 +46,26 @@ void parse_comands (void)
 	uint8_t *startOfData;
 	uint8_t printBuffer [50];
 	uint32_t charsPrinted, entryCounter;
-	uint32_t a;
+	volatile uint32_t a, dacCh = 0;
 	
 	if(udi_cdc_is_rx_ready())
 	{
 		temp = udi_cdc_getc();
 		udi_cdc_putc(temp);
 		
-		if(insertPointer < (HOLDING_BUFFER_SIZE - 2))
+		if(temp == 127) // 127 = backspace in ASCII?? (sholud be DELITE)
+		{
+			if(insertPointer)
+			{
+				insertPointer--;
+			}
+		}
+		else if(insertPointer < (HOLDING_BUFFER_SIZE - 2))
 		{
 			holdingBuffer[insertPointer] = temp;
 			insertPointer++;
 		}	
+		
 		if(temp == '\r')
 		{
 			udi_cdc_putc('\n');
@@ -93,6 +110,10 @@ void parse_comands (void)
 							udi_cdc_write_buf(printBuffer, charsPrinted);
 							//todo: limit sample rate period
 							//todo: calcualte timeer base based on sample period
+						}
+						else
+						{
+							print_formating_error();
 						}	
 					}
 					else if(comandByte == COMAND_SET_AVERAGE_COUNT)
@@ -105,6 +126,10 @@ void parse_comands (void)
 							udi_cdc_write_buf(printBuffer, charsPrinted);
 							//todo: limit samples per channel
 						}
+						else
+						{
+							print_formating_error();
+						}
 					}
 					else if(comandByte == COMAND_SET_MEASURMENT_NBR_COUNT)
 					{
@@ -115,6 +140,10 @@ void parse_comands (void)
 							charsPrinted = sprintf(printBuffer, "DAQ will sample all enebled channels %u times\n\r", daqSettings.cycles);
 							udi_cdc_write_buf(printBuffer, charsPrinted);
 							//todo: limit samples per channel
+						}
+						else
+						{
+							print_formating_error();
 						}
 					}
 					break;
@@ -136,6 +165,7 @@ void parse_comands (void)
 						a = atoi(tempBuffer);
 						if(a)
 						{
+							if(a > 4) {a = 4;} // we only have 4 channels
 							daqSettings.sequence[entryCounter] = a;
 						}
 						else
@@ -147,6 +177,56 @@ void parse_comands (void)
 						entryCounter++;
 						startOfData++;
 					}
+					entryCounter++;
+					daqSettings.sequence[entryCounter] = 0;
+					charsPrinted = sprintf(printBuffer, "Sequence set to: ");
+					udi_cdc_write_buf(printBuffer, charsPrinted);
+					for(n = 0; n < 8; n++)
+					{
+						charsPrinted = sprintf(printBuffer, "%u ", daqSettings.sequence[n]);
+						udi_cdc_write_buf(printBuffer, charsPrinted);
+						if(daqSettings.sequence[n] == 0) break;	
+					}
+					udi_cdc_putc('\n');
+					udi_cdc_putc('\r');
+					
+					break;
+					
+				case COMAND_SET_DAC_VALUE:
+					n = 0;
+					startOfData++;
+					if(*startOfData == '0') {dacCh = 0;}
+					else if(*startOfData == '1') {dacCh = 1;}
+					else {dacCh = 0;}
+					startOfData++;
+					if(*startOfData != ',') 
+					{
+						print_formating_error();
+						break;
+					}
+
+					startOfData++;
+					n = 0;
+					while(*startOfData >= '0' && *startOfData <= '9')
+					{
+						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break;
+						tempBuffer[n++] = *startOfData++;
+					}
+					tempBuffer[n] = 0;
+					if(*startOfData == '\r')
+					{
+						a = atoi(tempBuffer);
+						charsPrinted = sprintf(printBuffer, "DAC channel %u set to %u mV\n\r", dacCh, a);
+						udi_cdc_write_buf(printBuffer, charsPrinted);
+						
+					}
+					else
+					{
+						print_formating_error();
+						break;
+					}
+					break;
+					
 					
 			}
 			
