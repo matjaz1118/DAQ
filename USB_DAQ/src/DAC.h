@@ -9,7 +9,7 @@
 #ifndef DAC_H_
 #define DAC_H_
 
-#define DAC_GAIN
+#define DAC_GAIN	4883
 #define DAC_REF		3300
 
 
@@ -17,7 +17,7 @@
 
 void dac_init (void);
 
-void dac_set (uint16_t ch0, int16_t ch1);
+void dac_set (uint32_t ch, uint32_t val);
 
 
 

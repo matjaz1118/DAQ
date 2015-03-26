@@ -8,6 +8,8 @@
 #include "parser.h"
 #include "udi_cdc.h"
 #include "stdint-gcc.h"
+#include "adc.h"
+#include "DAC.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -46,7 +48,7 @@ void parse_comands (void)
 	uint8_t *startOfData;
 	uint8_t printBuffer [50];
 	uint32_t charsPrinted, entryCounter;
-	volatile uint32_t a, dacCh = 0;
+	volatile int32_t a, dacCh = 0;
 	
 	if(udi_cdc_is_rx_ready())
 	{
@@ -105,11 +107,12 @@ void parse_comands (void)
 						if(*startOfData == '\r')
 						{
 							tempBuffer[n] = 0;
-							daqSettings.timerBase = atoi(tempBuffer);
-							charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase);
+							a = atoi(tempBuffer);
+							if(a < 2) a = 0;
+							if(a > 50000) a = 50000;
+							daqSettings.timerBase = a / 2;
+							charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase * 2);
 							udi_cdc_write_buf(printBuffer, charsPrinted);
-							//todo: limit sample rate period
-							//todo: calcualte timeer base based on sample period
 						}
 						else
 						{
@@ -207,7 +210,7 @@ void parse_comands (void)
 
 					startOfData++;
 					n = 0;
-					while(*startOfData >= '0' && *startOfData <= '9')
+					while(*startOfData >= '0' && *startOfData <= '9' || *startOfData == '-')
 					{
 						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break;
 						tempBuffer[n++] = *startOfData++;
@@ -216,7 +219,12 @@ void parse_comands (void)
 					if(*startOfData == '\r')
 					{
 						a = atoi(tempBuffer);
-						charsPrinted = sprintf(printBuffer, "DAC channel %u set to %u mV\n\r", dacCh, a);
+						if(a < -10000) a = -10000;
+						if(a > 10000) a = 10000;
+						a = (a * 1000) / DAC_GAIN;
+						a += 2048;
+						dac_set(dacCh, a);
+						charsPrinted = sprintf(printBuffer, "DAC channel %u set to %d mV\n\r", dacCh, ((a * DAC_GAIN) / 1000) - 10000);
 						udi_cdc_write_buf(printBuffer, charsPrinted);
 						
 					}
@@ -226,6 +234,10 @@ void parse_comands (void)
 						break;
 					}
 					break;
+					
+				default:
+					charsPrinted = sprintf(printBuffer, "Unknown comand!\n\r");
+					udi_cdc_write_buf(printBuffer, charsPrinted);
 					
 					
 			}

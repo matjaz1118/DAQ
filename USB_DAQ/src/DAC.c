@@ -30,10 +30,16 @@ void dac_init (void)
 
 /* Sets DAC value iv mV */
 
-void dac_set (uint16_t ch0, int16_t ch1)
+void dac_set (uint32_t ch, uint32_t val)
 {
-	dacc_set_channel_selection(DACC, 0);
-	dacc_write_conversion_data(DACC, (uint32_t)ch0);
-	dacc_set_channel_selection(DACC, 1);
-	dacc_write_conversion_data(DACC, ch1);
+	if(ch)
+	{
+		dacc_set_channel_selection(DACC, 1);
+		dacc_write_conversion_data(DACC, val);
+	}
+	else
+	{
+		dacc_set_channel_selection(DACC, 0);
+		dacc_write_conversion_data(DACC, val);
+	}
 }
