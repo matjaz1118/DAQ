@@ -56,5 +56,4 @@ int main (void)
 		delay_ms(10);
 	}
 	// Insert application code here, after the board has been initialized.
-	// some bullshit so i can test new GIT setup
 }
