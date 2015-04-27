@@ -3,6 +3,7 @@
 *.ko
 *.obj
 *.elf
+*.d
 
 # Precompiled Headers
 *.gch
@@ -29,3 +30,6 @@
 *.hex
 *.bin
 *.o
+
+debug/
+release/
