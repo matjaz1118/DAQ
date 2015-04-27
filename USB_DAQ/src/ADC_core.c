@@ -70,11 +70,11 @@ void ADC_init (void)
 }
 
 
-void start_aquisition (void)
+void aquisition_start (void)
 {
 	DAQSettingsPtr = get_current_DAQ_settings();
 	repetitionCounter = DAQSettingsPtr->cycles;
-	sampleCounter = DAQSettingsPtr->samplesNbr;
+	sampleCounter = DAQSettingsPtr->avgCounter;
 	DAQSettingsPtr->newData = FALSE;
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
 	tc_write_ra(TC0, 0, 2);
@@ -97,7 +97,7 @@ void ADC_Handler (void)
 		}
 		else
 		{
-			sampleCounter = DAQSettingsPtr->samplesNbr;
+			sampleCounter = DAQSettingsPtr->avgCounter;
 			sequencePosition++;
 			if(DAQSettingsPtr->sequence[sequencePosition] == 0);
 			{

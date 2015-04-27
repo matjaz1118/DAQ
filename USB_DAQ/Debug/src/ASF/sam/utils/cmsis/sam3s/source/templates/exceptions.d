@@ -4,13 +4,10 @@ src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.d \
  ../src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.h \
  ../src/ASF/sam/utils/cmsis/sam3s/include/sam3s.h \
  ../src/ASF/sam/utils/cmsis/sam3s/include/sam3s4b.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\lib\gcc\arm-none-eabi\4.8.3\include\stdint.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\stdint.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\_ansi.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\newlib.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\sys\config.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\machine\ieeefp.h \
- c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\sys\features.h \
+ c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\lib\gcc\arm-none-eabi\4.8.4\include\stdint.h \
+ c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\stdint.h \
+ c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\machine\_default_types.h \
+ c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\sys\features.h \
  ../src/ASF/thirdparty/CMSIS/Include/core_cm3.h \
  ../src/ASF/thirdparty/CMSIS/Include/core_cmInstr.h \
  ../src/ASF/thirdparty/CMSIS/Include/core_cmFunc.h \
@@ -76,19 +73,13 @@ src/ASF/sam/utils/cmsis/sam3s/source/templates/exceptions.d \
 
 ../src/ASF/sam/utils/cmsis/sam3s/include/sam3s4b.h:
 
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\lib\gcc\arm-none-eabi\4.8.3\include\stdint.h:
+c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\lib\gcc\arm-none-eabi\4.8.4\include\stdint.h:
 
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\stdint.h:
+c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\stdint.h:
 
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\_ansi.h:
+c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\machine\_default_types.h:
 
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\newlib.h:
-
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\sys\config.h:
-
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\machine\ieeefp.h:
-
-c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1429\arm-gnu-toolchain\arm-none-eabi\include\sys\features.h:
+c:\program\ files\ (x86)\atmel\atmel\ toolchain\arm\ gcc\native\4.8.1443\arm-gnu-toolchain\arm-none-eabi\include\sys\features.h:
 
 ../src/ASF/thirdparty/CMSIS/Include/core_cm3.h:
 

@@ -82,12 +82,14 @@ void parse_comands (void)
 					daqSettings.startAcq = 1;
 					charsPrinted = sprintf(printBuffer, "Acquisition started\n\r");
 					udi_cdc_write_buf(printBuffer, charsPrinted);
+					aquisition_start();
 					break;
 				
 				case COMAND_STOP_ACQ:
 					daqSettings.stopAcq = 1;
 					charsPrinted = sprintf(printBuffer, "Acquisition stoped\n\r");
 					udi_cdc_write_buf(printBuffer, charsPrinted);
+					//aquisition_stop();
 					break;
 					
 				case COMAND_SET_SAMPLE_PERIOD:
@@ -97,9 +99,9 @@ void parse_comands (void)
 					//skip_blank_chars(startOfData);
 					startOfData++;
 					n = 0;
-					while(*startOfData >= '0' && *startOfData <= '9')
+					while(*startOfData >= '0' && *startOfData <= '9')  //copy all numeric chars in tempBuffer
 					{
-						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break;
+						if(startOfData > (holdingBuffer + HOLDING_BUFFER_SIZE - 1)) break; // prevents from trying to read beyond the end of holding buffer
 						tempBuffer[n++] = *startOfData++;
 					}
 					if(comandByte == COMAND_SET_SAMPLE_PERIOD)
@@ -108,7 +110,7 @@ void parse_comands (void)
 						{
 							tempBuffer[n] = 0;
 							a = atoi(tempBuffer);
-							if(a < 2) a = 0;
+							if(a < 2) a = 2;
 							if(a > 50000) a = 50000;
 							daqSettings.timerBase = a / 2;
 							charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase * 2);
@@ -124,8 +126,8 @@ void parse_comands (void)
 						if(*startOfData == '\r')
 						{
 							tempBuffer[n] = 0;
-							daqSettings.samplesNbr = atoi(tempBuffer);
-							charsPrinted = sprintf(printBuffer, "DAQ will atempt to take %u samples per channel\n\r", daqSettings.samplesNbr);
+							daqSettings.avgCounter = atoi(tempBuffer);
+							charsPrinted = sprintf(printBuffer, "DAQ will atempt to take %u samples per channel\n\r", daqSettings.avgCounter);
 							udi_cdc_write_buf(printBuffer, charsPrinted);
 							//todo: limit samples per channel
 						}
@@ -140,7 +142,7 @@ void parse_comands (void)
 						{
 							tempBuffer[n] = 0;
 							daqSettings.cycles = atoi(tempBuffer);
-							charsPrinted = sprintf(printBuffer, "DAQ will sample all enebled channels %u times\n\r", daqSettings.cycles);
+							charsPrinted = sprintf(printBuffer, "DAQ will sample all enabled channels %u times\n\r", daqSettings.cycles);
 							udi_cdc_write_buf(printBuffer, charsPrinted);
 							//todo: limit samples per channel
 						}

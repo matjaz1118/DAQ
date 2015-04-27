@@ -5,7 +5,7 @@
     <ProjectVersion>6.2</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
     <ProjectGuid>{ae50363b-93eb-42f2-b97b-709650edc572}</ProjectGuid>
-    <avrdevice>atsam3s4b</avrdevice>
+    <avrdevice>ATSAM3S4B</avrdevice>
     <avrdeviceseries>sam3s</avrdeviceseries>
     <OutputType>Executable</OutputType>
     <Language>C</Language>
@@ -231,13 +231,13 @@
           <JtagDaisyChainDevices>
           </JtagDaisyChainDevices>
         </InterfaceProperties>
-        <InterfaceName>JTAG</InterfaceName>
+        <InterfaceName>SWD</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.samice</ToolType>
       <ToolNumber>268005015</ToolNumber>
       <ToolName>J-Link</ToolName>
     </com_atmel_avrdbg_tool_samice>
-    <avrtoolinterface>JTAG</avrtoolinterface>
+    <avrtoolinterface>SWD</avrtoolinterface>
     <preserveEEPROM>true</preserveEEPROM>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
