@@ -34,7 +34,9 @@ const uint16_t adcSampleRateLUT [15] = {
 
 
 daq_settings_t *DAQSettingsPtr;
-uint32_t result, sequencePosition = 1, repetitionCounter, sampleCounter;
+uint32_t result, sequencePosition = 1, avgCounter, sampleCounter;
+
+
 
 void timer_init (void)
 {
@@ -73,7 +75,7 @@ void ADC_init (void)
 void aquisition_start (void)
 {
 	DAQSettingsPtr = get_current_DAQ_settings();
-	repetitionCounter = DAQSettingsPtr->cycles;
+	avgCounter = DAQSettingsPtr->cycles;
 	sampleCounter = DAQSettingsPtr->avgCounter;
 	DAQSettingsPtr->newData = FALSE;
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
@@ -81,37 +83,29 @@ void aquisition_start (void)
 	//Setup adc and start the timer. Everithing else happens in ADC ISR
 }
 
+void next_in_sequence (void)
+{
+	
+}
 
 void ADC_Handler (void)
 { 
-	DAQSettingsPtr = get_current_DAQ_settings();
-
-	result = adc_get_latest_value(ADC);
-	//todo: convert and print measured result
-	adc_disable_all_channel(ADC);
-	if(repetitionCounter)
-	{
-		if(sampleCounter)
-		{
-			sampleCounter--;
-		}
-		else
-		{
-			sampleCounter = DAQSettingsPtr->avgCounter;
-			sequencePosition++;
-			if(DAQSettingsPtr->sequence[sequencePosition] == 0);
-			{
-				sequencePosition = 0;
-				repetitionCounter--;
-			}
-		}
-		adc_enable_channel(ADC, DAQSettingsPtr->sequence[sequencePosition]); // todo: channel maping
-	}
-	else
-	{
-		tc_stop(TC0, 0);
-	}
+	static uint32_t accumulator = 0;
+	uint32_t result;
+	uint32_t charsPrinted;
+	uint8_t printBuffer[20];
 	
+	accumulator += adc_get_latest_value(ADC);
+	if(avgCounter++ == DAQSettingsPtr->avgCounter)
+	{
+		//stop th efree run mode of adc!!
+		result = accumulator / DAQSettingsPtr->avgCounter;
+		//todo: convert result to mV
+		charsPrinted = sprintf(printBuffer, "%u", result);
+		udi_cdc_write_buf(printBuffer, charsPrinted);
+		next_in_sequence();
+			
+	}
 }
 
 
