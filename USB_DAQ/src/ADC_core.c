@@ -85,6 +85,25 @@ void aquisition_start (void)
 
 void next_in_sequence (void)
 {
+	if(sampleCounter != DAQSettingsPtr->cycles)
+	{
+		sequencePosition++;
+		adc_disable_all_channel(ADC);
+		if(DAQSettingsPtr->sequence[sequencePosition])
+		{
+			adc_enable_channel(ADC, DAQSettingsPtr->sequence[sequencePosition] - 1);
+		}
+		else
+		{
+			sequencePosition = 0;
+			sampleCounter++;
+		}
+	}
+	else
+	{
+		//we are finished, stop aquisition!
+	}
+	
 	
 }
 
@@ -98,13 +117,12 @@ void ADC_Handler (void)
 	accumulator += adc_get_latest_value(ADC);
 	if(avgCounter++ == DAQSettingsPtr->avgCounter)
 	{
-		//stop th efree run mode of adc!!
+		//stop the free run mode of adc!!
 		result = accumulator / DAQSettingsPtr->avgCounter;
 		//todo: convert result to mV
 		charsPrinted = sprintf(printBuffer, "%u", result);
-		udi_cdc_write_buf(printBuffer, charsPrinted);
-		next_in_sequence();
-			
+		//udi_cdc_write_buf(printBuffer, charsPrinted);
+		next_in_sequence();	
 	}
 }
 

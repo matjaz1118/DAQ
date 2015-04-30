@@ -12,6 +12,7 @@
 #include "DAC.h"
 #include <string.h>
 #include <stdio.h>
+#include "ADC_core.h"
 
 
 daq_settings_t daqSettings;

@@ -30,6 +30,7 @@
 #include "parser.h"
 #include "DAC.h"
 #include "ADC_core.h"
+#include "wdt.h"
 
 
 uint16_t angle;
@@ -38,9 +39,8 @@ int main (void)
 {
 	// Insert system clock initialization code here (sysclk_init()).
 	
-
+	wdt_disable(WDT);
 	board_init();
-	sysclk_init();
 	
 	/*
 	ADC_init();
