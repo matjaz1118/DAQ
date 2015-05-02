@@ -42,6 +42,8 @@ int main (void)
 	wdt_disable(WDT);
 	board_init();
 	
+	pio_set_output(PIOA, PIO_PA9, LOW, DISABLE, DISABLE);
+	timer_init();
 	/*
 	ADC_init();
 	timer_init();

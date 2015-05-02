@@ -13,6 +13,8 @@
 #include "interrupt.h"
 #include "sysclk.h"
 #include "stdint-gcc.h"
+#include "udi_cdc.h"
+
 
 const uint16_t adcSampleRateLUT [15] = {
 	ADC_SAMPLE_RATE_10HZ,
@@ -34,7 +36,7 @@ const uint16_t adcSampleRateLUT [15] = {
 
 
 daq_settings_t *DAQSettingsPtr;
-uint32_t result, sequencePosition = 1, avgCounter, sampleCounter;
+uint32_t result, sequencePosition = 0, avgCounter, sampleCounter;
 
 
 
@@ -44,12 +46,12 @@ void timer_init (void)
 	
 	pmc_enable_periph_clk(ID_TC0);
 	pmc_enable_periph_clk(ID_PIOA);
-	pio_set_peripheral(PIOA, PIO_TYPE_PIO_PERIPH_B, PIO_PA0);
+	//pio_set_peripheral(PIOA, PIO_TYPE_PIO_PERIPH_B, PIO_PA0);
 	
-	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_CPCTRG | TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET);
+	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC );
 	tc_write_rc(TC0, 0, 50000);
-	tc_write_ra(TC0, 0, 100);
-	tc_start(TC0, 0);
+	tc_enable_interrupt(TC0, 0, TC_IER_CPCS);
+	NVIC_EnableIRQ(TC0_IRQn);
 }
 
 void ADC_init (void)
@@ -75,34 +77,21 @@ void ADC_init (void)
 void aquisition_start (void)
 {
 	DAQSettingsPtr = get_current_DAQ_settings();
-	avgCounter = DAQSettingsPtr->cycles;
-	sampleCounter = DAQSettingsPtr->avgCounter;
+	avgCounter = DAQSettingsPtr->avgCounter;
+	sampleCounter = DAQSettingsPtr->cycles;
 	DAQSettingsPtr->newData = FALSE;
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
-	tc_write_ra(TC0, 0, 2);
+	tc_start(TC0, 0);
 	//Setup adc and start the timer. Everithing else happens in ADC ISR
+}
+
+void aquisition_stop (void)
+{
+	tc_stop(TC0, 0);
 }
 
 void next_in_sequence (void)
 {
-	if(sampleCounter != DAQSettingsPtr->cycles)
-	{
-		sequencePosition++;
-		adc_disable_all_channel(ADC);
-		if(DAQSettingsPtr->sequence[sequencePosition])
-		{
-			adc_enable_channel(ADC, DAQSettingsPtr->sequence[sequencePosition] - 1);
-		}
-		else
-		{
-			sequencePosition = 0;
-			sampleCounter++;
-		}
-	}
-	else
-	{
-		//we are finished, stop aquisition!
-	}
 	
 	
 }
@@ -115,15 +104,46 @@ void ADC_Handler (void)
 	uint8_t printBuffer[20];
 	
 	accumulator += adc_get_latest_value(ADC);
-	if(avgCounter++ == DAQSettingsPtr->avgCounter)
+	if(!avgCounter--)
 	{
 		//stop the free run mode of adc!!
 		result = accumulator / DAQSettingsPtr->avgCounter;
 		//todo: convert result to mV
-		charsPrinted = sprintf(printBuffer, "%u", result);
-		//udi_cdc_write_buf(printBuffer, charsPrinted);
-		next_in_sequence();	
+		charsPrinted = sprintf(printBuffer, "%u\n\r", result);
+		udi_cdc_write_buf(printBuffer, charsPrinted);
 	}
 }
 
 
+void TC0_Handler (void)
+{
+	volatile uint32_t ul_dummy;
+
+	// Clear status bit to acknowledge interrupt
+	ul_dummy = tc_get_status(TC0, 0);
+	
+	pio_toggle_pin_group(PIOA, PIO_PA9);
+	if(sampleCounter)
+	{
+		adc_disable_all_channel(ADC);
+		if(DAQSettingsPtr->sequence[sequencePosition])
+		{
+			adc_enable_channel(ADC, DAQSettingsPtr->sequence[sequencePosition] - 1);
+			sequencePosition++;
+			if(!DAQSettingsPtr->sequence[sequencePosition])
+			{
+				sequencePosition = 0;
+				sampleCounter--;
+			}
+		}
+		else
+		{
+			sequencePosition = 0;
+			sampleCounter--;
+		}
+	}
+	else
+	{
+		tc_stop(TC0, 0);
+	}
+}

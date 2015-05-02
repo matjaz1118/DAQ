@@ -90,7 +90,7 @@ void parse_comands (void)
 					daqSettings.stopAcq = 1;
 					charsPrinted = sprintf(printBuffer, "Acquisition stoped\n\r");
 					udi_cdc_write_buf(printBuffer, charsPrinted);
-					//aquisition_stop();
+					aquisition_stop();
 					break;
 					
 				case COMAND_SET_SAMPLE_PERIOD:
@@ -256,9 +256,5 @@ void parse_comands (void)
 
 daq_settings_t * get_current_DAQ_settings (void)
 {
-		daqSettings.sequence[0]= 1;
-		daqSettings.sequence[1]= 2;
-		daqSettings.sequence[2]= 3;
-
 	return (&daqSettings);
 }

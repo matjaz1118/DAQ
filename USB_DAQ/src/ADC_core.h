@@ -16,6 +16,7 @@
 void timer_init (void);
 void ADC_init (void);
 void aquisition_start (void);
+void aquisition_stop (void);
 
 
 
