@@ -14,6 +14,7 @@
 #include "sysclk.h"
 #include "stdint-gcc.h"
 #include "udi_cdc.h"
+#include "adc.h"
 
 
 const uint16_t adcSampleRateLUT [15] = {
@@ -38,7 +39,15 @@ const uint16_t adcSampleRateLUT [15] = {
 daq_settings_t *DAQSettingsPtr;
 uint32_t result, sequencePosition = 0, avgCounter, sampleCounter;
 
+void adc_enable_freerun (void)
+{
+	ADC -> ADC_MR |= ADC_MR_FREERUN;
+}
 
+void adc_disable_freerun (void)
+{
+	ADC -> ADC_MR &= ~ADC_MR_FREERUN;
+}
 
 void timer_init (void)
 {
@@ -63,14 +72,16 @@ void ADC_init (void)
 	pio_set_peripheral(PIOA, PIO_TYPE_PIO_PERIPH_D, PIO_PA17 | PIO_PA18 | PIO_PA19 | PIO_PA20);
 	pio_set_peripheral(PIOB, PIO_TYPE_PIO_PERIPH_D, PIO_PB0 | PIO_PB1 | PIO_PB2 | PIO_PB3);
 	
-	//set inputs to bi differential!!!
-	adc_init(ADC, sysclk_get_main_hz(), ADC_CLK, ADC_STARTUP_TIME_1);
-	adc_configure_timing(ADC, 0, 1, 2);
+	//todo: set inputs to bi differential!!!
+	adc_init(ADC, sysclk_get_main_hz(), ADC_FREQ_MAX, ADC_STARTUP_TIME_1);
+	adc_configure_timing(ADC, 0, ADC_SETTLING_TIME_3, 1);
 	adc_set_resolution(ADC, ADC_MR_LOWRES_BITS_12);
 	adc_enable_interrupt(ADC, ADC_ISR_DRDY);
-	adc_configure_trigger(ADC, ADC_TRIG_TIO_CH_0, ADC_MR_FREERUN_OFF);
-	adc_enable_channel(ADC, ADC_CHANNEL_4);
-	NVIC_EnableIRQ(ADC_IRQn);	
+	adc_configure_trigger(ADC, ADC_TRIG_SW, 0); // there is a bug in ASF driver for ADC, so free run mode has to be enabled manualy
+	adc_enable_freerun();
+	//adc_enable_channel(ADC, ADC_CHANNEL_4);
+	NVIC_EnableIRQ(ADC_IRQn);
+	delay_ms(1);	
 }
 
 
@@ -99,19 +110,26 @@ void next_in_sequence (void)
 void ADC_Handler (void)
 { 
 	static uint32_t accumulator = 0;
-	uint32_t result;
+	uint32_t result, status;
 	uint32_t charsPrinted;
 	uint8_t printBuffer[20];
 	
-	accumulator += adc_get_latest_value(ADC);
-	if(!avgCounter--)
-	{
-		//stop the free run mode of adc!!
-		result = accumulator / DAQSettingsPtr->avgCounter;
-		//todo: convert result to mV
-		charsPrinted = sprintf(printBuffer, "%u\n\r", result);
-		udi_cdc_write_buf(printBuffer, charsPrinted);
-	}
+	status = adc_get_status(ADC);
+		accumulator += adc_get_latest_value(ADC);
+		avgCounter--;
+		if(avgCounter == 1) {adc_disable_freerun();}
+		if(!avgCounter)
+		{
+			//adc_stop(ADC);
+			result = accumulator / DAQSettingsPtr->avgCounter;
+			//todo: convert result to mV
+			charsPrinted = sprintf(printBuffer, "%u\n\r", result);
+			udi_cdc_write_buf(printBuffer, charsPrinted);
+		}
+		
+		
+
+	
 }
 
 
@@ -129,6 +147,7 @@ void TC0_Handler (void)
 		if(DAQSettingsPtr->sequence[sequencePosition])
 		{
 			adc_enable_channel(ADC, DAQSettingsPtr->sequence[sequencePosition] - 1);
+			adc_start(ADC);
 			sequencePosition++;
 			if(!DAQSettingsPtr->sequence[sequencePosition])
 			{
@@ -145,5 +164,6 @@ void TC0_Handler (void)
 	else
 	{
 		tc_stop(TC0, 0);
+		//adc_stop(ADC);
 	}
 }
