@@ -89,7 +89,7 @@ void ADC_init (void)
 
 void aquisition_start (void)
 {
-
+	
 	DAQSettingsPtr = get_current_DAQ_settings();
 	avgCounter = DAQSettingsPtr->avgCounter;
 	sampleCounter = DAQSettingsPtr->cycles;
@@ -98,6 +98,7 @@ void aquisition_start (void)
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
 	tc_start(TC0, 0);
 	//Setup adc and start the timer. Everithing else happens in TIMER ISR
+	
 	
 }
 
@@ -113,10 +114,12 @@ void ADC_Handler (void)
 	uint32_t charsPrinted;
 	uint8_t printBuffer[20];
 	
+	pio_set_pin_group_high(PIOA, PIO_PA9);
 	status = adc_get_status(ADC);
 	accumulator += adc_get_latest_value(ADC);
-	avgCounter--;
 	if(avgCounter == 1) {adc_disable_freerun(); adc_disable_all_channel(ADC);}
+	avgCounter--;
+	pio_set_pin_group_low(PIOA, PIO_PA9);
 	if(!avgCounter)
 	{
 		//adc_stop(ADC);
@@ -124,8 +127,11 @@ void ADC_Handler (void)
 		result = accumulator  / DAQSettingsPtr->avgCounter; 
 		accumulator = 0;
 		//todo: convert result to mV
-		charsPrinted = sprintf(printBuffer, "%u\n\r", result);
-		udi_cdc_write_buf(printBuffer, charsPrinted);
+		//charsPrinted = sprintf(printBuffer, "%u\n\r", result);
+		//udi_cdc_write_buf(printBuffer, charsPrinted);
+		printBuffer[0] = 0xFF & result;
+		printBuffer[1] = (result >> 8) & 0xFF;
+		pio_set_pin_group_low(PIOA, PIO_PA9);
 	}
 		
 		
@@ -140,7 +146,7 @@ void TC0_Handler (void)
 
 	// Clear status bit to acknowledge interrupt
 	ul_dummy = tc_get_status(TC0, 0);	
-	pio_toggle_pin_group(PIOA, PIO_PA9);
+//	pio_toggle_pin_group(PIOA, PIO_PA9);
 	if(sampleCounter)
 	{
 		avgCounter = DAQSettingsPtr->avgCounter;

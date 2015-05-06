@@ -28,7 +28,7 @@ typedef struct
 {
 	uint8_t newData;
 	uint32_t timerBase;
-	uint8_t sequence[8];
+	uint8_t sequence[9];
 	uint16_t avgCounter;
 	uint16_t cycles;
 	uint8_t startAcq;
