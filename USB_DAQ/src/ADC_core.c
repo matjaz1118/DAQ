@@ -18,25 +18,7 @@
 #include "delay.h"
 
 
-const uint16_t adcSampleRateLUT [15] = {
-	ADC_SAMPLE_RATE_10HZ,
-	ADC_SAMPLE_RATE_25HZ,
-	ADC_SAMPLE_RATE_50HZ,
-	ADC_SAMPLE_RATE_100HZ,
-	ADC_SAMPLE_RATE_250HZ,
-	ADC_SAMPLE_RATE_500HZ,
-	ADC_SAMPLE_RATE_1000HZ,
-	ADC_SAMPLE_RATE_2500HZ,
-	ADC_SAMPLE_RATE_5000HZ,
-	ADC_SAMPLE_RATE_10000HZ,
-	ADC_SAMPLE_RATE_20000HZ,
-	ADC_SAMPLE_RATE_25000HZ,
-	ADC_SAMPLE_RATE_50000HZ,
-	ADC_SAMPLE_RATE_100000HZ,
-	ADC_SAMPLE_RATE_250000HZ
-};
-
-
+uint16_t adcResults [8000];
 daq_settings_t *DAQSettingsPtr;
 uint32_t result, sequencePosition = 0, avgCounter, sampleCounter;
 
@@ -97,6 +79,7 @@ void aquisition_start (void)
 	adc_disable_all_channel(ADC);
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
 	tc_start(TC0, 0);
+	adc_enable_interrupt(ADC, ADC_ISR_DRDY);
 	//Setup adc and start the timer. Everithing else happens in TIMER ISR
 	
 	
@@ -131,12 +114,9 @@ void ADC_Handler (void)
 		//udi_cdc_write_buf(printBuffer, charsPrinted);
 		printBuffer[0] = 0xFF & result;
 		printBuffer[1] = (result >> 8) & 0xFF;
+		adc_disable_interrupt(ADC, ADC_ISR_DRDY);
 		pio_set_pin_group_low(PIOA, PIO_PA9);
 	}
-		
-		
-
-	
 }
 
 
