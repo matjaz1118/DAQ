@@ -49,6 +49,7 @@ void timer_init (void)
 
 void ADC_init (void)
 {
+	uint32_t dummy;
 	pmc_enable_periph_clk(ID_ADC);
 	pmc_enable_periph_clk(ID_PIOA);
 	pmc_enable_periph_clk(ID_PIOB);
@@ -63,6 +64,9 @@ void ADC_init (void)
 	adc_configure_trigger(ADC, ADC_TRIG_SW, 0); // there is a bug in ASF driver for ADC, so free run mode has to be enabled manualy
 	ADC->ADC_MR |= ADC_MR_USEQ;  // use sequencer
 	adc_enable_tag(ADC);
+	delay_ms(1);
+	dummy = ADC->ADC_ISR;
+
 
 }
 
@@ -88,21 +92,47 @@ void aquisition_start (void)
 	ADC->ADC_RCR = chCntr * avgCounter;
 	ADC->ADC_PTCR = ADC_PTCR_RXTEN;
 	ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
+	adc_enable_interrupt(ADC, ADC_IER_RXBUFF);
+	NVIC_EnableIRQ(ADC_IRQn);
 	adc_start(ADC);
 	tc_start(TC0, 0);
 	
 	//Setup adc and start the timer. Everithing else happens in TIMER ISR
-	
-	
-	
 }
 
 void aquisition_stop (void)
 {
 	tc_stop(TC0, 0);
-	ADC->ADC_MR &= ADC_MR_FREERUN;
+	ADC->ADC_MR &= ~ADC_MR_FREERUN;
 	
 }
+
+void ADC_Handler (void)
+{
+	uint8_t printBuffer[20];
+	uint32_t finalValues [4] = {0, 0, 0, 0};
+	uint32_t i, charsPrinted, interruptStatus;
+	
+	ADC->ADC_MR &= ~ADC_MR_FREERUN;
+	//ADC->ADC_RCR = 1;
+	if(adc_get_status(ADC) & ADC_ISR_RXBUFF)
+	{
+		ADC->ADC_RCR = 1;
+		interruptStatus = adc_get_status(ADC);
+		for(i = 0; i < (chCntr * avgCounter); i++)
+		{
+			finalValues[i % chCntr] += adcResults[i];
+		}
+		for(i = 0; i < 3; i++)
+		{
+			charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, finalValues[i] / avgCounter);
+			udi_cdc_write_buf(printBuffer, charsPrinted);
+		}
+	}
+	
+	
+}
+
 
 void TC0_Handler (void)
 {
