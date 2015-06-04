@@ -18,7 +18,7 @@
 #include "delay.h"
 
 
-uint16_t adcResults [20]; //used to be 8000
+uint16_t adcResults [200]; //used to be 8000
 daq_settings_t *DAQSettingsPtr;
 uint32_t result, sequencePosition = 0, avgCounter, sampleCounter, chCntr;
 
@@ -80,6 +80,8 @@ void aquisition_start (void)
 	avgCounter = DAQSettingsPtr->avgCounter;
 	sampleCounter = DAQSettingsPtr->cycles;
 	DAQSettingsPtr->newData = FALSE;
+	ADC->ADC_MR &= ~ ADC_MR_FREERUN;
+	adc_stop_sequencer(ADC);
 	adc_disable_all_channel(ADC);
 	ADC->ADC_SEQR1 = 0;
 	for(i = 0; DAQSettingsPtr->sequence[i]; i++)
@@ -91,11 +93,11 @@ void aquisition_start (void)
 	ADC->ADC_RPR = adcResults;
 	ADC->ADC_RCR = chCntr * avgCounter;
 	ADC->ADC_PTCR = ADC_PTCR_RXTEN;
-	ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
+	adc_start_sequencer(ADC);
 	adc_enable_interrupt(ADC, ADC_IER_RXBUFF);
 	NVIC_EnableIRQ(ADC_IRQn);
-	adc_start(ADC);
 	tc_start(TC0, 0);
+	ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
 	
 	//Setup adc and start the timer. Everithing else happens in TIMER ISR
 }
@@ -114,20 +116,26 @@ void ADC_Handler (void)
 	uint32_t i, charsPrinted, interruptStatus;
 	
 	ADC->ADC_MR &= ~ADC_MR_FREERUN;
-	//ADC->ADC_RCR = 1;
-	if(adc_get_status(ADC) & ADC_ISR_RXBUFF)
+	interruptStatus = adc_get_status(ADC);
+	NVIC_ClearPendingIRQ(ID_ADC);
+	if(interruptStatus & ADC_ISR_RXBUFF)
 	{
 		ADC->ADC_RCR = 1;
-		interruptStatus = adc_get_status(ADC);
+		ADC->ADC_RCR = 2; // there is a bug in ASF, so removing this line will make things not work WTF!!!
 		for(i = 0; i < (chCntr * avgCounter); i++)
 		{
 			finalValues[i % chCntr] += adcResults[i];
 		}
-		for(i = 0; i < 3; i++)
+		for(i = 0; i < chCntr; i++)
 		{
-			charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, finalValues[i] / avgCounter);
+			charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, (finalValues[i] / avgCounter));
 			udi_cdc_write_buf(printBuffer, charsPrinted);
 		}
+		sampleCounter--;
+		adc_stop_sequencer(ADC);
+		ADC->ADC_RPR = adcResults;
+		ADC->ADC_RCR = chCntr * avgCounter;
+		adc_start_sequencer(ADC);
 	}
 	
 	
@@ -143,12 +151,8 @@ void TC0_Handler (void)
 	pio_toggle_pin_group(PIOA, PIO_PA9);
 	if(sampleCounter)
 	{	
-		
-		ADC->ADC_RPR = adcResults;
-		ADC->ADC_RCR = chCntr * avgCounter;
 		ADC->ADC_PTCR = ADC_PTCR_RXTEN;
-		adc_start(ADC);
-		tc_start(TC0, 0);
+		ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
 	}
 	else
 	{
