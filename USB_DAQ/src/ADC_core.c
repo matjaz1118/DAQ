@@ -120,8 +120,6 @@ void ADC_Handler (void)
 	NVIC_ClearPendingIRQ(ID_ADC);
 	if(interruptStatus & ADC_ISR_RXBUFF)
 	{
-		ADC->ADC_RCR = 1;
-		ADC->ADC_RCR = 2; // there is a bug in ASF, so removing this line will make things not work WTF!!!
 		for(i = 0; i < (chCntr * avgCounter); i++)
 		{
 			finalValues[i % chCntr] += adcResults[i];
