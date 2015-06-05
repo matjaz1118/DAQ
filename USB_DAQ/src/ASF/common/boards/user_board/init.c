@@ -18,7 +18,7 @@ void board_init(void)
 	 * for, e.g., the I/O pins. The initialization can rely on application-
 	 * specific board configuration, found in conf_board.h.
 	 */
-	delay_ms(10); // seems PLL works better with this line...
+	//delay_ms(10); // seems PLL works better with this line...
 	sysclk_init();
 	wdt_disable(WDT);
 	pmc_enable_periph_clk(ID_PIOA);

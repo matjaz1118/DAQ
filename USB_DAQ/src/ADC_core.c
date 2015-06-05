@@ -113,13 +113,21 @@ void ADC_Handler (void)
 {
 	uint8_t printBuffer[20];
 	uint32_t finalValues [4] = {0, 0, 0, 0};
-	uint32_t i, charsPrinted, interruptStatus;
+	uint32_t i, charsPrinted;
+	volatile uint32_t reg0, reg1, reg2, reg3, reg4;
+	
 	
 	ADC->ADC_MR &= ~ADC_MR_FREERUN;
-	interruptStatus = adc_get_status(ADC);
-	NVIC_ClearPendingIRQ(ID_ADC);
-	if(interruptStatus & ADC_ISR_RXBUFF)
+	ADC->ADC_PTCR |= ADC_PTCR_RXTDIS;
+	
+	if(adc_get_status(ADC) & ADC_ISR_RXBUFF)
 	{
+		reg0 = ADC->ADC_MR;
+		reg1 = ADC->ADC_SEQR1;
+		reg2 = ADC->ADC_CHSR;
+		reg3 = ADC->ADC_EMR;
+		reg4 = ADC->ADC_IMR;
+		adc_stop(ADC);
 		for(i = 0; i < (chCntr * avgCounter); i++)
 		{
 			finalValues[i % chCntr] += adcResults[i];
@@ -130,10 +138,14 @@ void ADC_Handler (void)
 			udi_cdc_write_buf(printBuffer, charsPrinted);
 		}
 		sampleCounter--;
-		adc_stop_sequencer(ADC);
+		ADC->ADC_MR = reg0;
+		ADC->ADC_SEQR1 = reg1;
+		ADC->ADC_CHER = reg2;
+		ADC->ADC_EMR = reg3;
+		ADC->ADC_IER = reg4;
 		ADC->ADC_RPR = adcResults;
 		ADC->ADC_RCR = chCntr * avgCounter;
-		adc_start_sequencer(ADC);
+		
 	}
 	
 	
