@@ -69,13 +69,13 @@ void ADC_init (void)
 
 }
 
-void limit_average_nbr (void)
+static uint32_t limit_average_nbr (void)
 {
-	uint32_t  maxAvg, charsPrinted;
+	int32_t  maxAvg, charsPrinted;
 	uint8_t printBuffer[50];
 	
-	maxAvg = ((DAQSettingsPtr->timerBase * 20) - chCntr * TIME_PRINT_PER_CH) / ((chCntr * (TIME_CALCULATE_PER_CH_SAMPLE + TIME_SAMPLE)));
-	if(maxAvg)
+	maxAvg = (((int32_t)DAQSettingsPtr->timerBase * 20) - (int32_t)chCntr * TIME_PRINT_PER_CH) / (((int32_t)chCntr * (TIME_CALCULATE_PER_CH_SAMPLE + TIME_SAMPLE)));
+	if(maxAvg > 0)
 	{
 		if (maxAvg < avgCounter)
 		{
@@ -83,13 +83,15 @@ void limit_average_nbr (void)
 			charsPrinted = sprintf(printBuffer, "Avering limited to %u samples per channel\n\r", avgCounter);
 			udi_cdc_write_buf(printBuffer, charsPrinted);
 		}
+		return 1;
 	}
 	else
 	{
 		//todo: we should handle this some other way...
-		charsPrinted = sprintf(printBuffer, "Avering limited\n\r");
+		charsPrinted = sprintf(printBuffer, "Impossible to start samplig\n\r");
 		udi_cdc_write_buf(printBuffer, charsPrinted);
 		avgCounter = 1;
+		return 0;
 	}
 }
 
@@ -112,25 +114,33 @@ void aquisition_start (void)
 		ADC->ADC_SEQR1 |= (DAQSettingsPtr->sequence[i] << (i * 4));
 		adc_enable_channel(ADC, chCntr++);
 	}
-	limit_average_nbr();
-	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
-	ADC->ADC_RPR = adcResults;
-	ADC->ADC_RCR = chCntr * avgCounter;
-	ADC->ADC_PTCR = ADC_PTCR_RXTEN;
-	adc_start_sequencer(ADC);
-	adc_enable_interrupt(ADC, ADC_IER_RXBUFF);
-	NVIC_SetPriority(ADC_IRQn, 5);
-	NVIC_EnableIRQ(ADC_IRQn);
-	tc_start(TC0, 0);
-	ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
+	if(limit_average_nbr())
+	{
+		tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
+		ADC->ADC_RPR = adcResults;
+		ADC->ADC_RCR = chCntr * avgCounter;
+		ADC->ADC_PTCR = ADC_PTCR_RXTEN;
+		adc_start_sequencer(ADC);
+		adc_enable_interrupt(ADC, ADC_IER_RXBUFF);
+		NVIC_SetPriority(ADC_IRQn, 5);
+		NVIC_EnableIRQ(ADC_IRQn);
+		tc_start(TC0, 0);
+		ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
+		
+		//Setup adc and start the timer. Everithing else happens in TIMER ISR
+	}
+	else
+	{
+		aquisition_stop();
+	}
 	
-	//Setup adc and start the timer. Everithing else happens in TIMER ISR
 }
 
 void aquisition_stop (void)
 {
 	tc_stop(TC0, 0);
 	ADC->ADC_MR &= ~ADC_MR_FREERUN;
+	
 	
 }
 
