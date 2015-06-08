@@ -18,6 +18,17 @@
 daq_settings_t daqSettings;
 
 
+void init_daq_settings_struct (void)
+{
+	daqSettings.avgCounter = 1;
+	daqSettings.comMode = ASCII_MODE;
+	daqSettings.cycles = 1;
+	daqSettings.newData = 0;
+	daqSettings.sequence[0] = 1;
+	daqSettings.sequence[1] = 0;
+	daqSettings.timerBase = 50000;
+}
+
 
 void skip_blank_chars (uint8_t *string)
 {
@@ -112,7 +123,7 @@ void parse_comands (void)
 							tempBuffer[n] = 0;
 							a = atoi(tempBuffer);
 							if(a < 2) a = 2;
-							if(a > 50000) a = 50000;
+							if(a > 100000) a = 100000;
 							daqSettings.timerBase = a / 2;
 							charsPrinted = sprintf(printBuffer, "Sample period set to %u uS\n\r", daqSettings.timerBase * 2);
 							udi_cdc_write_buf(printBuffer, charsPrinted);

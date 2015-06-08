@@ -67,7 +67,30 @@ void ADC_init (void)
 	delay_ms(1);
 	dummy = ADC->ADC_ISR;
 
+}
 
+void limit_average_nbr (void)
+{
+	uint32_t  maxAvg, charsPrinted;
+	uint8_t printBuffer[50];
+	
+	maxAvg = ((DAQSettingsPtr->timerBase * 20) - chCntr * TIME_PRINT_PER_CH) / ((chCntr * (TIME_CALCULATE_PER_CH_SAMPLE + TIME_SAMPLE)));
+	if(maxAvg)
+	{
+		if (maxAvg < avgCounter)
+		{
+			avgCounter = maxAvg;
+			charsPrinted = sprintf(printBuffer, "Avering limited to %u samples per channel\n\r", avgCounter);
+			udi_cdc_write_buf(printBuffer, charsPrinted);
+		}
+	}
+	else
+	{
+		//todo: we should handle this some other way...
+		charsPrinted = sprintf(printBuffer, "Avering limited\n\r");
+		udi_cdc_write_buf(printBuffer, charsPrinted);
+		avgCounter = 1;
+	}
 }
 
 
@@ -89,6 +112,7 @@ void aquisition_start (void)
 		ADC->ADC_SEQR1 |= (DAQSettingsPtr->sequence[i] << (i * 4));
 		adc_enable_channel(ADC, chCntr++);
 	}
+	limit_average_nbr();
 	tc_write_rc(TC0, 0, DAQSettingsPtr->timerBase);
 	ADC->ADC_RPR = adcResults;
 	ADC->ADC_RCR = chCntr * avgCounter;
@@ -112,10 +136,9 @@ void aquisition_stop (void)
 void ADC_Handler (void)
 {
 	uint8_t printBuffer[20];
-	uint32_t finalValues [4] = {0, 0, 0, 0};
+	volatile uint32_t finalValues [4] = {0, 0, 0, 0};
 	uint32_t i, charsPrinted;
 	volatile uint32_t reg0, reg1, reg2, reg3, reg4;
-	
 	
 	ADC->ADC_MR &= ~ADC_MR_FREERUN;
 	ADC->ADC_PTCR |= ADC_PTCR_RXTDIS;

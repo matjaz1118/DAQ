@@ -33,6 +33,7 @@ typedef struct
 	uint16_t cycles;
 	uint8_t startAcq;
 	uint8_t stopAcq;
+	uint8_t comMode;
 }daq_settings_t;
 
 //Finite state machine states definitions 
@@ -55,8 +56,13 @@ typedef struct
 #define COMAND_SET_DAC_VALUE					'D'
 
 
+#define ASCII_MODE	0
+#define FAST_MODE	1
+
+
 
 void parse_comands(void);
+void init_daq_settings_struct (void);
 daq_settings_t * get_current_DAQ_settings (void);
 
 #endif /* PARSER_H_ */

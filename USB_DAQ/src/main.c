@@ -47,6 +47,7 @@ int main (void)
 	timer_init();
 	pio_set_output(PIOA, PIO_PA17, LOW, DISABLE, DISABLE);
 	*/
+	init_daq_settings_struct();
 	udc_start();
 
 	
