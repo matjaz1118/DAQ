@@ -57,7 +57,7 @@
 #endif
 
 #ifndef UDD_USB_INT_LEVEL
-#  define UDD_USB_INT_LEVEL 5 // By default USB interrupt have low priority
+#  define UDD_USB_INT_LEVEL 3 // By default USB interrupt have low priority
 #endif
 
 /**

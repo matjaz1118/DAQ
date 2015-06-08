@@ -43,7 +43,7 @@ void timer_init (void)
 	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC );
 	tc_write_rc(TC0, 0, 50000);
 	tc_enable_interrupt(TC0, 0, TC_IER_CPCS);
-	NVIC_SetPriority(TC0_IRQn, 2);
+	NVIC_SetPriority(TC0_IRQn, 5);
 	NVIC_EnableIRQ(TC0_IRQn);
 }
 
@@ -119,6 +119,7 @@ void aquisition_start (void)
 	ADC->ADC_PTCR = ADC_PTCR_RXTEN;
 	adc_start_sequencer(ADC);
 	adc_enable_interrupt(ADC, ADC_IER_RXBUFF);
+	NVIC_SetPriority(ADC_IRQn, 5);
 	NVIC_EnableIRQ(ADC_IRQn);
 	tc_start(TC0, 0);
 	ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
