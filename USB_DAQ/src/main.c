@@ -34,7 +34,6 @@
 
 int main (void)
 {
-	// Insert system clock initialization code here (sysclk_init()).
 	
 	wdt_disable(WDT);
 	board_init();
@@ -47,6 +46,9 @@ int main (void)
 	timer_init();
 	pio_set_output(PIOA, PIO_PA17, LOW, DISABLE, DISABLE);
 	*/
+	
+	
+	
 	init_daq_settings_struct();
 	udc_start();
 

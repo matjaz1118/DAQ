@@ -45,7 +45,7 @@ typedef struct
 
 #define HOLDING_BUFFER_SIZE		20
 
-#define LIST_OF_KNOWN_COMANDS	"STRAFED"
+#define LIST_OF_KNOWN_COMANDS	"STRAFEDs"
 
 #define COMAND_START_ACQ						'S'
 #define COMAND_STOP_ACQ							'T'
@@ -54,6 +54,7 @@ typedef struct
 #define COMAND_SET_MEASURMENT_NBR_COUNT			'F'
 #define COMAND_SET_SEQUENCER					'E'
 #define COMAND_SET_DAC_VALUE					'D'
+#define COMAND_START_FAST_ACQ					's'
 
 
 #define ASCII_MODE	0

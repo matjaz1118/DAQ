@@ -91,11 +91,24 @@ void parse_comands (void)
 			switch (*(startOfData))
 			{
 				case COMAND_START_ACQ:
-					daqSettings.startAcq = 1;
-					charsPrinted = sprintf(printBuffer, "Acquisition started\n\r");
-					udi_cdc_write_buf(printBuffer, charsPrinted);
-					aquisition_start();
-					break;
+				case COMAND_START_FAST_ACQ:
+					if(*startOfData == COMAND_START_ACQ)
+					{
+						daqSettings.startAcq = 1;
+						daqSettings.comMode = ASCII_MODE;
+						charsPrinted = sprintf(printBuffer, "Acquisition started\n\r");
+						udi_cdc_write_buf(printBuffer, charsPrinted);
+						aquisition_start();
+						break;
+					}
+					else if (*startOfData == COMAND_START_FAST_ACQ)
+					{
+						daqSettings.startAcq = 1;
+						daqSettings.comMode = FAST_MODE;
+						aquisition_start();
+						break;
+					}
+					
 				
 				case COMAND_STOP_ACQ:
 					daqSettings.stopAcq = 1;

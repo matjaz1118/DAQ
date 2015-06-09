@@ -125,6 +125,7 @@ void aquisition_start (void)
 		NVIC_SetPriority(ADC_IRQn, 5);
 		NVIC_EnableIRQ(ADC_IRQn);
 		tc_start(TC0, 0);
+		//TC0->TC_CHANNEL[0].TC_CCR |= TC_CCR_SWTRG;
 		ADC->ADC_MR |= ADC_MR_FREERUN;	//enable freerun mode
 		
 		//Setup adc and start the timer. Everithing else happens in TIMER ISR
@@ -151,6 +152,12 @@ void ADC_Handler (void)
 	uint32_t i, charsPrinted;
 	volatile uint32_t reg0, reg1, reg2, reg3, reg4;
 	
+	union
+	{
+		uint16_t value;
+		uint8_t result[2];
+	} spliter;
+	
 	ADC->ADC_MR &= ~ADC_MR_FREERUN;
 	ADC->ADC_PTCR |= ADC_PTCR_RXTDIS;
 	
@@ -166,11 +173,23 @@ void ADC_Handler (void)
 		{
 			finalValues[i % chCntr] += adcResults[i];
 		}
-		for(i = 0; i < chCntr; i++)
+		if(DAQSettingsPtr->comMode == ASCII_MODE)
 		{
-			charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, (finalValues[i] / avgCounter));
-			udi_cdc_write_buf(printBuffer, charsPrinted);
+			for(i = 0; i < chCntr; i++)
+			{
+				charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, (finalValues[i] / avgCounter));
+				udi_cdc_write_buf(printBuffer, charsPrinted);
+			}
 		}
+		else
+		{
+			for(i = 0; i < chCntr; i++)
+			{
+				spliter.value = (finalValues[i] / avgCounter);
+				udi_cdc_write_buf(spliter.result, 2);
+			}
+		}
+		
 		sampleCounter--;
 		ADC->ADC_MR = reg0;
 		ADC->ADC_SEQR1 = reg1;
