@@ -58,7 +58,7 @@ void ADC_init (void)
 	pio_set_peripheral(PIOA, PIO_TYPE_PIO_PERIPH_D, PIO_PA17 | PIO_PA18 | PIO_PA19 | PIO_PA20);
 	pio_set_peripheral(PIOB, PIO_TYPE_PIO_PERIPH_D, PIO_PB0 | PIO_PB1 | PIO_PB2 | PIO_PB3);
 	
-	//todo: set inputs to bi differential!!!
+	ADC->ADC_COR = (0x000000FF << 16); // set inputs to bi fully differentzial
 	adc_init(ADC, sysclk_get_main_hz(), ADC_FREQ_MAX, ADC_STARTUP_TIME_1);
 	adc_configure_timing(ADC, 0, ADC_SETTLING_TIME_0, 1);
 	adc_set_resolution(ADC, ADC_MR_LOWRES_BITS_12);
@@ -122,7 +122,7 @@ void aquisition_start (void)
 	ADC->ADC_SEQR1 = 0;
 	for(i = 0; DAQSettingsPtr->sequence[i]; i++)
 	{
-		ADC->ADC_SEQR1 |= (DAQSettingsPtr->sequence[i] << (i * 4));
+		ADC->ADC_SEQR1 |= (((DAQSettingsPtr->sequence[i] - 1) * 2) << (i * 4));
 		adc_enable_channel(ADC, chCntr++);
 	}
 	if(limit_average_nbr())
@@ -162,7 +162,7 @@ void ADC_Handler (void)
 	volatile uint32_t finalValues [4] = {0, 0, 0, 0};
 	uint32_t i, charsPrinted, chnannel;
 	int32_t result;
-	volatile uint32_t reg0, reg1, reg2, reg3, reg4;
+	volatile uint32_t reg0, reg1, reg2, reg3, reg4, reg5;
 	
 	union
 	{
@@ -180,6 +180,7 @@ void ADC_Handler (void)
 		reg2 = ADC->ADC_CHSR;
 		reg3 = ADC->ADC_EMR;
 		reg4 = ADC->ADC_IMR;
+		reg5 = ADC->ADC_COR;
 		adc_stop(ADC);
 		for(i = 0; i < (chCntr * avgCounter); i++)
 		{
@@ -215,6 +216,7 @@ void ADC_Handler (void)
 		ADC->ADC_IER = reg4;
 		ADC->ADC_RPR = adcResults;
 		ADC->ADC_RCR = chCntr * avgCounter;
+		ADC->ADC_COR = reg5;
 		
 	}
 	
