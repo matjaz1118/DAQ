@@ -21,6 +21,8 @@ void aquisition_stop (void);
 
 #define ADC_CLK		1000000
 
+#define ADC_GAIN							24
+
 #define TIME_SAMPLE							15
 #define TIME_CALCULATE_PER_CH_SAMPLE		15
 #define TIME_PRINT_PER_CH					610

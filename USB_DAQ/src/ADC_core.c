@@ -19,8 +19,9 @@
 
 
 uint16_t adcResults [200]; //used to be 8000
+uint8_t binaryBuffer [52];
 daq_settings_t *DAQSettingsPtr;
-uint32_t result, sequencePosition = 0, avgCounter, sampleCounter, chCntr;
+uint32_t result, sequencePosition = 0, avgCounter, sampleCounter, chCntr, binCntr;
 
 void adc_enable_freerun (void)
 {
@@ -88,20 +89,30 @@ static uint32_t limit_average_nbr (void)
 	else
 	{
 		//todo: we should handle this some other way...
+		/*
 		charsPrinted = sprintf(printBuffer, "Impossible to start samplig\n\r");
 		udi_cdc_write_buf(printBuffer, charsPrinted);
 		avgCounter = 1;
 		return 0;
+		*/
 	}
+	
 }
 
-
+static void validate_daq_settings_struct (void)
+{
+	if(DAQSettingsPtr->avgCounter < 1) {DAQSettingsPtr->avgCounter = 1;}
+	if(DAQSettingsPtr->sequence[0] == 0) {DAQSettingsPtr->sequence[0] = 1; DAQSettingsPtr->sequence[1] = 0;}
+	if(DAQSettingsPtr->cycles < 1) {DAQSettingsPtr->cycles = 1;}
+}
 
 void aquisition_start (void)
 {
 	uint32_t i = 0;
 	chCntr = 0;
+	binCntr = 0;
 	DAQSettingsPtr = get_current_DAQ_settings();
+	validate_daq_settings_struct();
 	avgCounter = DAQSettingsPtr->avgCounter;
 	sampleCounter = DAQSettingsPtr->cycles;
 	DAQSettingsPtr->newData = FALSE;
@@ -149,7 +160,8 @@ void ADC_Handler (void)
 {
 	uint8_t printBuffer[20];
 	volatile uint32_t finalValues [4] = {0, 0, 0, 0};
-	uint32_t i, charsPrinted;
+	uint32_t i, charsPrinted, chnannel;
+	int32_t result;
 	volatile uint32_t reg0, reg1, reg2, reg3, reg4;
 	
 	union
@@ -177,7 +189,10 @@ void ADC_Handler (void)
 		{
 			for(i = 0; i < chCntr; i++)
 			{
-				charsPrinted = sprintf(printBuffer, "CH%u: %u\n\r", i, (finalValues[i] / avgCounter));
+				chnannel = (finalValues[i] / avgCounter) >> 12;
+				result = (finalValues[i] / avgCounter) & 0x0FFF;
+				result = ((result - 2048) * ADC_GAIN) / 10;
+				charsPrinted = sprintf(printBuffer, "CH%u: %imV\n\r", chnannel, result);
 				udi_cdc_write_buf(printBuffer, charsPrinted);
 			}
 		}
@@ -186,10 +201,12 @@ void ADC_Handler (void)
 			for(i = 0; i < chCntr; i++)
 			{
 				spliter.value = (finalValues[i] / avgCounter);
-				udi_cdc_write_buf(spliter.result, 2);
+				binaryBuffer[binCntr++] = spliter.result[1];
+				binaryBuffer[binCntr++] = spliter.result[0];
 			}
 		}
 		
+
 		sampleCounter--;
 		ADC->ADC_MR = reg0;
 		ADC->ADC_SEQR1 = reg1;
@@ -219,6 +236,11 @@ void TC0_Handler (void)
 	}
 	else
 	{
-		aquisition_stop();	
+		aquisition_stop();
+		if(DAQSettingsPtr->comMode == FAST_MODE)
+		{
+			udi_cdc_write_buf(binaryBuffer, binCntr);
+			udi_cdc_write_buf("\n\r", 2);
+		}
 	}
 }
