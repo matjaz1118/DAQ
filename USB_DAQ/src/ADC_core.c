@@ -18,7 +18,7 @@
 #include "delay.h"
 
 
-uint16_t adcResults [200]; //used to be 8000
+uint16_t adcResults [1000]; //used to be 8000
 uint8_t binaryBuffer [52];
 daq_settings_t *DAQSettingsPtr;
 uint32_t result, sequencePosition = 0, avgCounter, sampleCounter, chCntr, binCntr;
@@ -55,8 +55,12 @@ void ADC_init (void)
 	pmc_enable_periph_clk(ID_PIOA);
 	pmc_enable_periph_clk(ID_PIOB);
 	
-	pio_set_peripheral(PIOA, PIO_TYPE_PIO_PERIPH_D, PIO_PA17 | PIO_PA18 | PIO_PA19 | PIO_PA20);
-	pio_set_peripheral(PIOB, PIO_TYPE_PIO_PERIPH_D, PIO_PB0 | PIO_PB1 | PIO_PB2 | PIO_PB3);
+	pio_set_peripheral(PIOA, PIO_TYPE_PIO_INPUT, PIO_PA17 | PIO_PA18 | PIO_PA19 | PIO_PA20);
+	pio_set_peripheral(PIOB, PIO_TYPE_PIO_INPUT, PIO_PB0 | PIO_PB1 | PIO_PB2 | PIO_PB3);
+	
+	PIOA->PIO_PUDR = (PIO_PUDR_P17 | PIO_PUDR_P18 | PIO_PUDR_P19 | PIO_PUDR_P20);
+	PIOB->PIO_PUDR = (PIO_PUDR_P0 | PIO_PUDR_P1 | PIO_PUDR_P2 | PIO_PUDR_P3);
+	
 	
 	ADC->ADC_COR = (0x000000FF << 16); // set inputs to bi fully differentzial
 	adc_init(ADC, sysclk_get_main_hz(), ADC_FREQ_MAX, ADC_STARTUP_TIME_1);

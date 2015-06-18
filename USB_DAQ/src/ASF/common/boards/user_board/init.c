@@ -22,8 +22,8 @@ void board_init(void)
 	sysclk_init();
 	wdt_disable(WDT);
 	pmc_enable_periph_clk(ID_PIOA);
-	pio_set_output(PIOA, PIO_PA17, LOW, DISABLE, DISABLE);
-	pio_set_output(PIOA, PIO_PA18, LOW, DISABLE, DISABLE);
+	//pio_set_output(PIOA, PIO_PA17, LOW, DISABLE, DISABLE);
+	//pio_set_output(PIOA, PIO_PA18, LOW, DISABLE, DISABLE);
 	dac_init();
 	
 }
