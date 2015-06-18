@@ -196,7 +196,7 @@ void ADC_Handler (void)
 			{
 				chnannel = (finalValues[i] / avgCounter) >> 12;
 				result = (finalValues[i] / avgCounter) & 0x0FFF;
-				result = ((result - 2048) * ADC_GAIN) / 10;
+				result = ((result - 2048) * ADC_REF) / (4096 * AMP_GAIN);
 				charsPrinted = sprintf(printBuffer, "CH%u: %imV\n\r", chnannel, result);
 				udi_cdc_write_buf(printBuffer, charsPrinted);
 			}
