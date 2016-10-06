@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>7.0</ProjectVersion>
+    <ProjectVersion>6.2</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
     <ProjectGuid>{ae50363b-93eb-42f2-b97b-709650edc572}</ProjectGuid>
     <avrdevice>ATSAM3S1B</avrdevice>
@@ -209,25 +209,25 @@
         <documentation help="http://asf.atmel.com/docs/3.18.1/common.applications.user_application.user_board.sam3s/html/index.html" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.22.0" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.18.1" />
         </dependencies>
         <project id="common.applications.user_application.user_board.sam3s" value="Add" config="" content-id="Atmel.ASF" />
         <board id="board.user_board.sam3s" value="Add" config="" content-id="Atmel.ASF" />
       </framework-data>
     </AsfFrameworkConfig>
-    <avrtool>
-    </avrtool>
+    <avrtool>com.atmel.avrdbg.tool.samice</avrtool>
     <com_atmel_avrdbg_tool_samice>
       <ToolOptions>
         <InterfaceProperties>
-          <JtagDbgClock>4000000</JtagDbgClock>
+          <JtagDbgClock>0</JtagDbgClock>
           <JtagEnableExtResetOnStartSession>true</JtagEnableExtResetOnStartSession>
           <JtagInChain>false</JtagInChain>
           <JtagDevicesBefore>0</JtagDevicesBefore>
           <JtagDevicesAfter>0</JtagDevicesAfter>
           <JtagInstrBitsBefore>0</JtagInstrBitsBefore>
           <JtagInstrBitsAfter>0</JtagInstrBitsAfter>
-          <JtagSelectedDeviceIndexInChain>0</JtagSelectedDeviceIndexInChain>
+          <JtagSelectedDeviceIndexInChain>
+          </JtagSelectedDeviceIndexInChain>
           <JtagDaisyChainDevices>
           </JtagDaisyChainDevices>
         </InterfaceProperties>
@@ -472,6 +472,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\parser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\power.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\power.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="atmel_devices_cdc.cat">

@@ -30,6 +30,7 @@
 #include "parser.h"
 #include "DAC.h"
 #include "ADC_core.h"
+#include "power.h"
 #include "wdt.h"
 
 int main (void)
@@ -44,6 +45,8 @@ int main (void)
 	timer_init();
 
 	ADC_init();
+	power_manegment_enable();
+	hv_enable();
 	/*
 	ADC_init();
 	timer_init();
