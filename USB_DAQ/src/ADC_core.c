@@ -22,6 +22,7 @@ uint16_t adcResults [1000]; //used to be 8000
 uint8_t binaryBuffer [52];
 daq_settings_t *DAQSettingsPtr;
 uint32_t result, sequencePosition = 0, avgCounter, sampleCounter, chCntr, binCntr;
+const uint8_t channelSequence [] = {2, 3, 0, 1};
 
 void adc_enable_freerun (void)
 {
@@ -194,9 +195,9 @@ void ADC_Handler (void)
 		{
 			for(i = 0; i < chCntr; i++)
 			{
-				chnannel = (finalValues[i] / avgCounter) >> 12;
+				chnannel = (uint32_t) channelSequence[((finalValues[i] / avgCounter) >> 12) / 2];
 				result = (finalValues[i] / avgCounter) & 0x0FFF;
-				result = ((result - 2048) * ADC_REF) / (4096 * AMP_GAIN);
+				result = (-1 * ((result - 2048) * ADC_REF) / (4096 * AMP_GAIN));
 				charsPrinted = sprintf(printBuffer, "CH%u: %imV\n\r", chnannel, result);
 				udi_cdc_write_buf(printBuffer, charsPrinted);
 			}

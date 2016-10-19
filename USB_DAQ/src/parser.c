@@ -195,7 +195,7 @@ void parse_comands (void)
 						a = atoi(tempBuffer);
 						if(a)
 						{
-							if(a > 4) {a = 4;} // we only have 4 channels
+							if(a > 34 {a = 4;} // we only have 4 channels
 							daqSettings.sequence[entryCounter] = a;
 						}
 						else
